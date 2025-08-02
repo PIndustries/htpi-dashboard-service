@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 # Configuration
 NATS_URL = os.environ.get('NATS_URL', 'nats://localhost:4222')
 NATS_USER = os.environ.get('NATS_USER')
-NATS_PASSWORD = os.environ.get('NATS_PASSWORD')
+NATS_PASS = os.environ.get('NATS_PASS')
 
 class DashboardService:
     def __init__(self):
@@ -34,9 +34,9 @@ class DashboardService:
         try:
             # Build connection options
             options = {}
-            if NATS_USER and NATS_PASSWORD:
+            if NATS_USER and NATS_PASS:
                 options['user'] = NATS_USER
-                options['password'] = NATS_PASSWORD
+                options['password'] = NATS_PASS
             
             self.nc = await nats.connect(NATS_URL, **options)
             logger.info(f"Connected to NATS at {NATS_URL}")
