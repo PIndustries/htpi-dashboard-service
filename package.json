@@ -1,0 +1,13 @@
+{
+  "name": "htpi-dashboard-service",
+  "version": "1.0.0",
+  "description": "HTPI Dashboard Analytics Service",
+  "main": "app.py",
+  "scripts": {
+    "start": "python app.py",
+    "dev": "python app.py"
+  },
+  "keywords": ["htpi", "dashboard", "analytics", "microservice"],
+  "author": "HTPI",
+  "license": "ISC"
+}
