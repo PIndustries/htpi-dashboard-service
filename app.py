@@ -53,7 +53,13 @@ class DashboardService:
             
             # Subscribe to health check requests
             await self.nc.subscribe("health.check", cb=self.handle_health_check)
+
+            # Subscribe to ping requests
+            await self.nc.subscribe("htpi.dashboard.service.ping", cb=self.handle_ping)
             await self.nc.subscribe("htpi-dashboard-service.health", cb=self.handle_health_check)
+
+            # Subscribe to ping requests
+            await self.nc.subscribe("htpi.dashboard.service.ping", cb=self.handle_ping)
             
             logger.info("Dashboard service subscriptions established")
         except Exception as e:
@@ -248,6 +254,33 @@ class DashboardService:
             except Exception as e:
                 logger.error(f"Error in simulate_real_time_updates: {str(e)}")
     
+    async def handle_ping(self, msg):
+        """Handle ping requests"""
+        try:
+            data = json.loads(msg.data.decode())
+            ping_id = data.get('pingId')
+            client_id = data.get('clientId')
+            
+            # Send pong response
+            pong_data = {
+                'serviceId': 'htpi-dashboard-service',
+                'pingId': ping_id,
+                'clientId': client_id,
+                'timestamp': datetime.utcnow().isoformat(),
+                'message': 'Service Online'
+            }
+            
+            await self.nc.publish(
+                'services.pong.htpi-dashboard-service',
+                json.dumps(pong_data).encode()
+            )
+            
+            logger.info(f"Sent pong response for ping {ping_id}")
+            
+        except Exception as e:
+            logger.error(f"Error handling ping: {str(e)}")
+    
+
     async def handle_health_check(self, msg):
         """Handle health check requests"""
         try:
