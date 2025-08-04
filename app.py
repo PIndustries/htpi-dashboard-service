@@ -33,12 +33,17 @@ class DashboardService:
         """Connect to NATS"""
         try:
             # Build connection options
-            options = {}
+            options = {
+                'servers': [NATS_URL],
+                'name': 'htpi-dashboard-service',
+                'reconnect_time_wait': 2,
+                'max_reconnect_attempts': -1
+            }
             if NATS_USER and NATS_PASS:
                 options['user'] = NATS_USER
                 options['password'] = NATS_PASS
             
-            self.nc = await nats.connect(NATS_URL, **options)
+            self.nc = await nats.connect(**options)
             logger.info(f"Connected to NATS at {NATS_URL}")
             
             # Subscribe to dashboard requests
@@ -47,7 +52,8 @@ class DashboardService:
             await self.nc.subscribe("htpi.dashboard.get.alerts", cb=self.handle_get_alerts)
             
             # Subscribe to health check requests
-            await self.nc.subscribe("htpi.health.htpi.dashboard.service", cb=self.handle_health_check)
+            await self.nc.subscribe("health.check", cb=self.handle_health_check)
+            await self.nc.subscribe("htpi-dashboard-service.health", cb=self.handle_health_check)
             
             logger.info("Dashboard service subscriptions established")
         except Exception as e:
