@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 # Configuration
 NATS_URL = os.environ.get('NATS_URL', 'nats://localhost:4222')
 NATS_USER = os.environ.get('NATS_USER')
-NATS_PASS = os.environ.get('NATS_PASSWORD')
+NATS_PASSWORD = os.environ.get('NATS_PASSWORD')
 
 class DashboardService:
     def __init__(self):
@@ -39,9 +39,9 @@ class DashboardService:
                 'reconnect_time_wait': 2,
                 'max_reconnect_attempts': -1
             }
-            if NATS_USER and NATS_PASS:
+            if NATS_USER and NATS_PASSWORD:
                 options['user'] = NATS_USER
-                options['password'] = NATS_PASS
+                options['password'] = NATS_PASSWORD
             
             self.nc = await nats.connect(**options)
             logger.info(f"Connected to NATS at {NATS_URL}")
