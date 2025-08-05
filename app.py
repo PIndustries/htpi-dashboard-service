@@ -61,6 +61,12 @@ class DashboardService:
             # Subscribe to ping requests
             await self.nc.subscribe("htpi.dashboard.service.ping", cb=self.handle_ping)
             
+            # Register with monitor service
+            await self._register_with_monitor()
+            
+            # Start heartbeat
+            asyncio.create_task(self._send_heartbeat())
+            
             logger.info("Dashboard service subscriptions established")
         except Exception as e:
             logger.error(f"Failed to connect to NATS: {str(e)}")
@@ -314,6 +320,55 @@ class DashboardService:
             
         except Exception as e:
             logger.error(f"Error handling health check: {str(e)}")
+    
+    async def _register_with_monitor(self):
+        """Register with monitor service"""
+        try:
+            registration_data = {
+                "service": "htpi-dashboard-service",
+                "version": "1.0.0",
+                "metadata": {
+                    "type": "microservice",
+                    "framework": "asyncio",
+                    "purpose": "dashboard-metrics"
+                }
+            }
+            await self.nc.publish("monitor.register", json.dumps(registration_data).encode())
+            logger.info("Registered htpi-dashboard-service with monitor service")
+        except Exception as e:
+            logger.error(f"Failed to register with monitor: {str(e)}")
+    
+    async def _send_heartbeat(self):
+        """Send periodic heartbeat to monitor service"""
+        heartbeat_interval = 10  # seconds
+        
+        while True:
+            try:
+                if self.nc and self.nc.is_connected:
+                    heartbeat_data = {
+                        "service": "htpi-dashboard-service",
+                        "timestamp": datetime.utcnow().isoformat(),
+                        "version": "1.0.0",
+                        "metadata": {
+                            "healthy": True,
+                            "connected_to_nats": True,
+                            "metrics_served": getattr(self, 'metrics_served', 0),
+                            "updates_sent": getattr(self, 'updates_sent', 0)
+                        }
+                    }
+                    await self.nc.publish(
+                        "monitor.heartbeat.htpi-dashboard-service", 
+                        json.dumps(heartbeat_data).encode()
+                    )
+                    logger.debug("Sent heartbeat for htpi-dashboard-service")
+                else:
+                    logger.warning("NATS not connected, skipping heartbeat")
+                    
+                await asyncio.sleep(heartbeat_interval)
+                
+            except Exception as e:
+                logger.error(f"Error sending heartbeat: {str(e)}")
+                await asyncio.sleep(heartbeat_interval)
     
     async def run(self):
         """Run the service"""
